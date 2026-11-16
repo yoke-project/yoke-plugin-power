@@ -1,0 +1,45 @@
+manifest: 1
+id: com.yoke.power
+protocol: 1
+streams:
+  - id: power.status
+  - id: power.devices
+    tolerates_loss: true
+commands:
+  - id: power.profile.set
+queries:
+  - id: power.status
+  - id: power.devices
+  - id: power.profiles
+occurrences:
+  - id: power.supply.changed
+  - id: power.battery.low
+  - id: power.battery.critical
+capabilities:
+  - name: query.power.status.answer
+    governs:
+      query: power.status
+  - name: query.power.devices.answer
+    governs:
+      query: power.devices
+  - name: query.power.profiles.answer
+    governs:
+      query: power.profiles
+  - name: command.power.profile.set.accept
+    governs:
+      command: power.profile.set
+  - name: stream.power.status.publish
+    governs:
+      stream: power.status
+  - name: stream.power.devices.publish
+    governs:
+      stream: power.devices
+  - name: event.power.supply.changed.report
+    governs:
+      occurrence: power.supply.changed
+  - name: event.power.battery.low.report
+    governs:
+      occurrence: power.battery.low
+  - name: event.power.battery.critical.report
+    governs:
+      occurrence: power.battery.critical

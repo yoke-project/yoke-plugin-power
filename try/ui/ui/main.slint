@@ -1,0 +1,165 @@
+import { Button, ListView, Palette } from "std-widgets.slint";
+
+export struct DeviceRow {
+    id:         string,
+    kind:       string,
+    name:       string,
+    // Empty where the device has no charge to report: a supply.
+    percentage: string,
+    percent:    int,
+    state:      string,
+    detail:     string,
+}
+
+component Info inherits Text {
+    color: Palette.foreground.transparentize(0.45);
+    font-size: 12px;
+    vertical-alignment: center;
+}
+
+// A horizontal gauge, coloured by how low it is.
+component Gauge inherits Rectangle {
+    in property <int> percent;
+    in property <string> level;
+    height: 14px;
+    border-radius: 7px;
+    background: Palette.border;
+    Rectangle {
+        x: 0;
+        width: parent.width * clamp(root.percent, 0, 100) / 100;
+        border-radius: 7px;
+        background: root.level == "critical" || root.level == "action" ? #d33
+            : root.level == "low" ? #e8a020
+            : Palette.accent-background;
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "Power";
+    preferred-width: 760px;
+    preferred-height: 520px;
+
+    in property <string> attached_to;
+    in-out property <string> message: "Starting...";
+
+    in property <bool> has_battery;
+    in property <bool> on_battery;
+    in property <int> percent;
+    in property <string> percentage;
+    in property <string> state;
+    in property <string> time_left;
+    in property <string> warning;
+
+    in property <string> profile;
+    in property <[string]> profiles;
+    in property <string> profiles_note;
+
+    in property <[DeviceRow]> devices;
+    in property <[string]> events;
+
+    callback set_profile(string);
+    callback clear_events();
+
+    VerticalLayout {
+        padding: 10px;
+        spacing: 10px;
+
+        HorizontalLayout {
+            spacing: 10px;
+            Text { text: root.message; font-weight: 700; vertical-alignment: center; wrap: word-wrap; horizontal-stretch: 1; }
+            Info { text: root.attached_to; }
+        }
+
+        // The supply and the battery: as tall as what it holds, whatever the window's height.
+        Rectangle {
+            vertical-stretch: 0;
+            border-radius: 6px;
+            background: Palette.alternate-background;
+            VerticalLayout {
+                padding: 14px;
+                spacing: 8px;
+                HorizontalLayout {
+                    spacing: 12px;
+                    Text {
+                        text: root.on_battery ? "On battery" : "On external power";
+                        font-size: 18px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    if root.has_battery : Text {
+                        text: root.percentage + "%";
+                        font-size: 18px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                }
+                if root.has_battery : Gauge { percent: root.percent; level: root.warning; }
+                HorizontalLayout {
+                    spacing: 16px;
+                    Info { text: root.has_battery ? root.state : "no battery"; }
+                    Info { text: root.time_left; }
+                    Info {
+                        text: root.warning == "low" ? "battery low"
+                            : root.warning == "critical" || root.warning == "action" ? "battery critical"
+                            : "";
+                        color: root.warning == "low" ? #e8a020 : #d33;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                }
+            }
+        }
+
+        // The power profile.
+        HorizontalLayout {
+            spacing: 8px;
+            Text { text: "Profile"; font-weight: 600; vertical-alignment: center; width: 70px; }
+            for p in root.profiles : Button {
+                text: p;
+                primary: p == root.profile;
+                clicked => { root.set_profile(p); }
+            }
+            Info { text: root.profiles_note; wrap: word-wrap; horizontal-stretch: 1; }
+        }
+
+        Text { text: "Devices"; font-weight: 600; }
+        ListView {
+            vertical-stretch: 1;
+            for d in root.devices : Rectangle {
+                height: 44px;
+                HorizontalLayout {
+                    padding-left: 8px; padding-right: 8px; spacing: 12px;
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        alignment: center;
+                        Text { text: d.name; overflow: elide; }
+                        Info { text: d.kind + (d.detail != "" ? "  ·  " + d.detail : ""); }
+                    }
+                    if d.percentage != "" : Gauge { width: 140px; y: (parent.height - self.height) / 2; percent: d.percent; level: "none"; }
+                    Info { text: d.percentage != "" ? d.percentage + "%" : ""; width: 50px; horizontal-alignment: right; }
+                    Info { text: d.state; width: 110px; }
+                }
+            }
+        }
+
+        Text { text: "Events"; font-weight: 600; }
+        HorizontalLayout {
+            spacing: 8px;
+            ListView {
+                height: 120px;
+                horizontal-stretch: 1;
+                for line in root.events : Text {
+                    text: line;
+                    font-family: "monospace";
+                    font-size: 12px;
+                    height: 18px;
+                    overflow: elide;
+                }
+            }
+            VerticalLayout {
+                alignment: start;
+                Button { text: "Clear"; clicked => { root.clear_events(); } }
+            }
+        }
+    }
+}

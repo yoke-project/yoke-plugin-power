@@ -1,0 +1,8 @@
+plugins:
+  - id: com.yoke.power
+    unit: power
+    source: ..
+    tag: null
+    arch: x86_64
+    digest: sha256:c6eb3f2e4a3971af6cda2403f8acfb02ec853d27e1224dceed83b291619c4d4b
+    taken: 2026-11-16T18:31:21Z

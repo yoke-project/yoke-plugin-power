@@ -1,0 +1,9 @@
+plugin: 1
+id: com.yoke.power
+language: rust
+program: power
+manifest: plugin/com.yoke.power.yaml
+build:
+  in: plugin/
+  run: cargo build --release --target "$YOKE_RUST_TARGET" && cp "target/$YOKE_RUST_TARGET/release/power" "$YOKE_OUT/power"
+architectures: [x86_64, aarch64]

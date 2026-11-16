@@ -1,0 +1,15 @@
+model: 1
+id: com.yoke.power-try
+version: 0.1.0
+arch: x86_64
+core: ">=0.15.0"
+units:
+  power:
+    kind: plugin
+    plugin: com.yoke.power
+    exec: components/plugins/power
+    digest: sha256:29c5552eb53e117622496245d6fb22e62da539bd1acb9b0b118bc9043702046d
+channels:
+  panel:
+    transport: local
+    clients: single
