@@ -140,8 +140,8 @@ fn profiles_json(p: &Profiles) -> Value {
     json!({ "active": p.active, "available": p.available, "degraded": p.degraded })
 }
 
-/// The status record's body: what is compared to decide whether something changed. The percentage is
-/// kept to a tenth, so that UPower's last decimal does not count as a change.
+/// The status record's body: what is compared to decide whether something changed. The percentage and
+/// the rate, in watts, are kept to a tenth, so that UPower's last decimal does not count as a change.
 fn body(s: &Supply, profile: Option<&Profiles>) -> Value {
     let b = &s.battery;
     json!({
@@ -151,6 +151,7 @@ fn body(s: &Supply, profile: Option<&Profiles>) -> Value {
             "state": b.state,
             "time_to_empty": b.time_to_empty,
             "time_to_full": b.time_to_full,
+            "energy_rate": (b.energy_rate * 10.0).round() / 10.0,
             "warning_level": b.warning_level,
         })),
         "profile": profile.map(|p| p.active.clone()),
