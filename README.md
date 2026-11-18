@@ -6,7 +6,7 @@ the power profile through power-profiles-daemon.
 
 | | |
 | --- | --- |
-| questions | `power.status` (the supply, the battery, the profile, with its sequence), `power.devices`, `power.profiles` |
+| questions | `power.status` (the supply, the battery and its rate in watts, the profile, with its sequence), `power.devices`, `power.profiles` |
 | commands | `power.profile.set` `{"profile": "power-saver" \| "balanced" \| "performance"}` |
 | streams | `power.status`: every change, none lost; `power.devices`: every device, whole, at every change |
 | occurrences | `power.supply.changed` (10 onto external power, 30 onto the battery), `power.battery.low` (50), `power.battery.critical` (70) |

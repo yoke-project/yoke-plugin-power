@@ -19,6 +19,7 @@ fn battery(percentage: f64, state: &'static str, warning_level: &'static str) ->
         percentage,
         state,
         time_to_empty: 3600,
+        energy_rate: 12.34,
         warning_level,
         ..Default::default()
     }
@@ -156,6 +157,29 @@ async fn the_status_is_counted_once_per_change_and_a_tenth_of_a_percent_is_none(
     p.refresh(&core).await.unwrap();
     handle(&core, &question(STATUS, ""), &p).await.unwrap();
     assert_eq!(json_of(&core.take()[0], 1)["sequence"], 1, "UPower's last decimal is no change");
+}
+
+#[tokio::test]
+async fn the_status_carries_the_batterys_rate_to_a_tenth_of_a_watt() {
+    let (fake, core) = (Fake::new(), Core::default());
+    let p = Power::new(Ok(fake.clone()));
+    p.refresh(&core).await.unwrap();
+    handle(&core, &question(STATUS, ""), &p).await.unwrap();
+    assert_eq!(json_of(&core.take()[0], 1)["battery"]["energy_rate"], 12.3);
+
+    let mut b = battery(80.0, "discharging", "none");
+    b.energy_rate = 12.31;
+    *fake.supply.lock().unwrap() = Supply { on_battery: true, battery: b.clone() };
+    p.refresh(&core).await.unwrap();
+    core.take();
+    handle(&core, &question(STATUS, ""), &p).await.unwrap();
+    let at = json_of(&core.take()[0], 1)["sequence"].clone();
+    b.energy_rate = 12.34;
+    *fake.supply.lock().unwrap() = Supply { on_battery: true, battery: b };
+    p.refresh(&core).await.unwrap();
+    core.take();
+    handle(&core, &question(STATUS, ""), &p).await.unwrap();
+    assert_eq!(json_of(&core.take()[0], 1)["sequence"], at, "a hundredth of a watt is no change");
 }
 
 #[tokio::test]
