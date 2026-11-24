@@ -65,14 +65,14 @@ if probe "$instance" > "$work/why"; then verdict="pass  $CASE"; else verdict="FA
 
 # The panel in try/ui, built against the published library and run with no screen — X under Xvfb, drawn by
 # Slint's software renderer — on the application's channel `panel` of the same instance. It attaches when it
-# says so; it says so on stderr as in its window.
+# says so; it says so on stderr as in its window, which xvfb-run hands on as its own output.
 PANEL=yoke-plugin-power:the-watch.02
 # std: yoke-plugin-power:the-watch.02
 panel() { # <instance>; says why on a failure
   command -v xvfb-run > /dev/null || { echo "xvfb-run is not on this host"; return 1; }
   local built
   built="$(cd "$root/try/ui" && CARGO_TARGET_DIR="$work/ui" cargo build --release --locked 2>&1)" || { echo "the panel does not build: $(tail -n 2 <<<"$built" | tr '\n' ' ')"; return 1; }
-  SLINT_BACKEND=winit-software timeout 80 xvfb-run -a "$work/ui/release/power-ui" --instance "$1" --channel panel 2> "$work/panel.log" &
+  SLINT_BACKEND=winit-software timeout 80 xvfb-run -a "$work/ui/release/power-ui" --instance "$1" --channel panel > "$work/panel.log" 2>&1 &
   local shown=$!
   for _ in $(seq 1 60); do
     grep -q 'power-ui: Attached' "$work/panel.log" && break
