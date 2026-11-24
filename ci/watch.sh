@@ -8,14 +8,14 @@ set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 results="${1:-$root/.results}"
-mkdir -p "$results"
+mkdir -p "$results" && results="$(cd "$results" && pwd)" # absolute: the script moves into try/
 date -u +%Y-%m-%dT%H:%M:%SZ > "$results/started"
 CASE=yoke-plugin-power:the-watch.01
 
-finish() { # <verdict line>
-  echo "$1" | tee "$results/checks.txt"
+finish() { # <verdict line>...
+  printf '%s\n' "$@" | tee "$results/checks.txt"
   date -u +%Y-%m-%dT%H:%M:%SZ > "$results/finished"
-  [[ "$1" == pass* ]]
+  ! grep -qv '^pass' "$results/checks.txt"
   exit $?
 }
 
@@ -62,6 +62,28 @@ probe() { # <instance>; says why on a failure
 }
 
 if probe "$instance" > "$work/why"; then verdict="pass  $CASE"; else verdict="FAIL  $CASE — under $release: $(cat "$work/why")"; fi
+
+# std: yoke-plugin-power:the-watch.02
+# The panel in try/ui, built against the published library and run with no screen — X under Xvfb, drawn by
+# Slint's software renderer — on the application's channel `panel` of the same instance. It attaches when it
+# says so; it says so on stderr as in its window.
+PANEL=yoke-plugin-power:the-watch.02
+panel() { # <instance>; says why on a failure
+  command -v xvfb-run > /dev/null || { echo "xvfb-run is not on this host"; return 1; }
+  local built
+  built="$(cd "$root/try/ui" && CARGO_TARGET_DIR="$work/ui" cargo build --release --locked 2>&1)" || { echo "the panel does not build: $(tail -n 2 <<<"$built" | tr '\n' ' ')"; return 1; }
+  SLINT_BACKEND=winit-software timeout 40 xvfb-run -a "$work/ui/release/power-ui" --instance "$1" --channel panel 2> "$work/panel.log" &
+  local shown=$!
+  for _ in $(seq 1 30); do
+    grep -q '^power-ui: Attached$' "$work/panel.log" && break
+    sleep 1
+  done
+  kill "$shown" 2>/dev/null
+  wait "$shown" 2>/dev/null
+  grep -q '^power-ui: Attached$' "$work/panel.log" || { echo "the panel did not attach: $(tail -n 3 "$work/panel.log" | tr '\n' ' ')"; return 1; }
+}
+if panel "$instance" > "$work/why"; then verdict2="pass  $PANEL"; else verdict2="FAIL  $PANEL — under $release: $(cat "$work/why")"; fi
+
 kill -INT "$running" 2>/dev/null
 for _ in $(seq 1 30); do kill -0 "$running" 2>/dev/null || break; sleep 1; done
-finish "$verdict"
+finish "$verdict" "$verdict2"
