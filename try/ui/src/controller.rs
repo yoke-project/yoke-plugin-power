@@ -52,6 +52,8 @@ struct Ctx {
 
 fn say(ui: &Weak<MainWindow>, msg: impl Into<String>) {
     let m = msg.into();
+    // Also on stderr, so that a run nobody looks at — the watch's — can read what the panel showed.
+    eprintln!("power-ui: {m}");
     let _ = ui.upgrade_in_event_loop(move |u| u.set_message(m.into()));
 }
 
