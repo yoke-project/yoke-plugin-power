@@ -19,3 +19,8 @@ jobs:
       - name: the tests
         working-directory: plugin
         run: cargo test
+      - name: the panel builds against the published library
+        working-directory: try/ui
+        run: |
+          sudo apt-get update -q && sudo apt-get install -q -y libfontconfig1-dev libxkbcommon-dev
+          cargo build --locked
