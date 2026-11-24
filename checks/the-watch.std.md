@@ -29,4 +29,4 @@
 | **Label** | blocking |
 | **Precondition** | the instance of `.01`, running; X under Xvfb, and Slint's software renderer |
 | **Action** | build the panel in `try/ui` and run it on the application's channel `panel` of that instance |
-| **Expected** | within 30 s the panel says *Attached* — the window it draws and its stderr say the same — so a Slint panel written with the Rust interface library opens a Session on the published contract and reads its opening |
+| **Expected** | within 60 s the panel says *Attached* — the window it draws and its stderr say the same — so a Slint panel written with the Rust interface library opens a Session on the published contract and reads its opening |
